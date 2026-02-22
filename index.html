@@ -849,7 +849,7 @@ function confirmQuit() {
 // MULTIPLAYER (WebSocket)
 // ══════════════════════════════════
 
-const WS_URL = 'wss://YOUR-SERVER.com';
+const WS_URL = 'wss://blockblast-production-59cd.up.railway.app';
 
 function genCode() {
   const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -863,7 +863,7 @@ function createRoom() {
   showScreen('screen-create');
   const s = document.getElementById('cr-status');
   s.textContent='🔌 Mode démo — serveur non connecté'; s.className='st-bar err';
-  // connectWS('create', code);
+  connectWS('create', code);
 }
 
 function joinRoom() {
@@ -871,7 +871,7 @@ function joinRoom() {
   const s = document.getElementById('join-st'); s.style.display='block';
   if (code.length<4) { s.textContent='Code invalide (4 caractères)'; return; }
   s.textContent='🔌 Mode démo — serveur non connecté';
-  // connectWS('join', code);
+  connectWS('join', code);
 }
 
 function connectWS(role, code) {
