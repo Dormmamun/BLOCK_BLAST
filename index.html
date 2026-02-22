@@ -524,11 +524,9 @@ const ghost = document.getElementById('drag-ghost');
 const ghostCtx = ghost.getContext('2d');
 let dragging=false, dragIdx=null;
 
-// Lift: combien de cellules au-dessus du doigt afficher la pièce
-const LIFT = 2.2;
-
 function haptic(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
 
+// Reconstruit le ghost à la taille exacte des cellules grille
 function buildGhost(piece){
   const cols=piece.def[0].length, rows=piece.def.length;
   const cs = cellSz();
@@ -536,29 +534,27 @@ function buildGhost(piece){
   ghost.style.width = cols*cs+'px'; ghost.style.height = rows*cs+'px';
   ghostCtx.clearRect(0,0,ghost.width,ghost.height);
   piece.def.forEach((row,r) => row.forEach((v,c)=>{
-    if(v) drawBlock(ghostCtx, c*cs, r*cs, cs, COLORS[piece.color], .9);
+    if(v) drawBlock(ghostCtx, c*cs, r*cs, cs, COLORS[piece.color], .92);
   }));
 }
 
-// Convertit coordonnées écran → position grille (centrée sur la pièce, levée)
+// Position grille depuis le doigt — centrée sur la pièce, sans offset vertical
 function screenToGrid(clientX, clientY, piece){
   const rect = canvas.getBoundingClientRect();
   const cs = cellSz();
   const cols=piece.def[0].length, rows=piece.def.length;
   const px = clientX - rect.left - (cols*cs)/2;
-  const py = clientY - rect.top  - (rows*cs)/2 - cs*LIFT;
-  // Utilise Math.round pour le snap naturel au centre de cellule
+  const py = clientY - rect.top  - (rows*cs)/2;
   return { col: Math.round(px/cs), row: Math.round(py/cs) };
 }
 
-// Cherche la meilleure position dans un rayon de 2 cases (plus tolérant)
+// Snap dans un rayon de 2 cases
 function snapBest(piece, baseRow, baseCol){
   if(canPlace(piece, baseRow, baseCol)) return {row:baseRow, col:baseCol};
-  // Cherche en spirale : distance 1 d'abord, puis 2
   for(let dist=1; dist<=2; dist++){
     for(let dr=-dist; dr<=dist; dr++){
       for(let dc=-dist; dc<=dist; dc++){
-        if(Math.abs(dr)!==dist && Math.abs(dc)!==dist) continue; // bord de la spirale uniquement
+        if(Math.abs(dr)!==dist && Math.abs(dc)!==dist) continue;
         if(canPlace(piece, baseRow+dr, baseCol+dc)) return {row:baseRow+dr, col:baseCol+dc};
       }
     }
@@ -572,7 +568,8 @@ function startDrag(idx, clientX, clientY){
   haptic(12);
   buildGhost(pieces[idx]);
   ghost.style.display='block';
-  renderTray(); // masque automatiquement le slot dragué
+  ghost.style.transform='translate(0,0)';
+  renderTray();
   moveDrag(clientX, clientY);
 }
 
@@ -580,17 +577,18 @@ function moveDrag(clientX, clientY){
   if(!dragging) return;
   const piece = pieces[dragIdx];
   const cs = cellSz();
-  const rows = piece.def.length;
+  const rect = canvas.getBoundingClientRect();
 
-  // Position ghost au-dessus du doigt
-  ghost.style.left = clientX+'px';
-  ghost.style.top  = (clientY - cs*LIFT - (rows*cs)/2 + cs*.5)+'px';
-
-  // Calcule hover avec snap
+  // Calcule position snappée
   const base = screenToGrid(clientX, clientY, piece);
   const snapped = snapBest(piece, base.row, base.col);
   hoverRow = snapped ? snapped.row : base.row;
   hoverCol = snapped ? snapped.col : base.col;
+
+  // Ghost positionné EXACTEMENT sur les cellules snappées (= preview grille)
+  ghost.style.left = (rect.left + hoverCol * cs) + 'px';
+  ghost.style.top  = (rect.top  + hoverRow * cs) + 'px';
+
   drawGrid();
 }
 
@@ -607,7 +605,6 @@ function endDrag(clientX, clientY){
     haptic([15,8,25]);
     placePiece(piece, snapped.row, snapped.col);
   } else {
-    // Placement raté — réaffiche la pièce dans le tray
     renderTray();
   }
   hoverRow=-1; hoverCol=-1;
