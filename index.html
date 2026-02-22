@@ -494,8 +494,16 @@ function renderTray(){
     const pw=cols*PC, ph=rows*PC;
 
     const slot = document.createElement('div');
-    slot.className = 'piece-slot'+(piece.used?' used':'')+(selectedIdx===i?' selected':'');
+    slot.className = 'piece-slot'+(piece.used?' used':'')+(selectedIdx===i&&!dragging?' selected':'');
     slot.dataset.idx = i;
+
+    // Si cette pièce est en train d'être glissée → slot vide et fantôme
+    if(dragging && dragIdx === i){
+      slot.style.opacity = '0';
+      slot.style.pointerEvents = 'none';
+      tray.appendChild(slot);
+      return;
+    }
 
     const c = document.createElement('canvas');
     c.width=pw; c.height=ph;
@@ -564,11 +572,8 @@ function startDrag(idx, clientX, clientY){
   haptic(12);
   buildGhost(pieces[idx]);
   ghost.style.display='block';
-  // Bounce animation on slot
-  const slots = document.querySelectorAll('.piece-slot');
-  if(slots[idx]){ slots[idx].classList.add('slot-bounce'); setTimeout(()=>slots[idx].classList.remove('slot-bounce'),200); }
+  renderTray(); // masque automatiquement le slot dragué
   moveDrag(clientX, clientY);
-  renderTray();
 }
 
 function moveDrag(clientX, clientY){
@@ -601,6 +606,9 @@ function endDrag(clientX, clientY){
   if(snapped){
     haptic([15,8,25]);
     placePiece(piece, snapped.row, snapped.col);
+  } else {
+    // Placement raté — réaffiche la pièce dans le tray
+    renderTray();
   }
   hoverRow=-1; hoverCol=-1;
   drawGrid();
