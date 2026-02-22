@@ -10,7 +10,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Serveur HTTP (pour servir le jeu ET le WebSocket)
 const server = http.createServer((req, res) => {
