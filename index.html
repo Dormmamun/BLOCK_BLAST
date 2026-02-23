@@ -462,20 +462,7 @@ function drawGrid(){
         if(inBounds) drawBlock(ctx, gc*cs, gr*cs, cs, ok?COLORS[piece.color]:'#ff2255', ok?.6:.25);
       }));
 
-      // Dashed outline around whole preview when valid
-      if(ok){
-        ctx.strokeStyle = 'rgba(255,255,255,.7)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4,3]);
-        piece.def.forEach((row,r) => row.forEach((v,c) => {
-          if(v){
-            const gc=hoverCol+c, gr=hoverRow+r;
-            if(gc>=0&&gc<GS&&gr>=0&&gr<GS)
-              ctx.strokeRect(gc*cs+3, gr*cs+3, cs-6, cs-6);
-          }
-        }));
-        ctx.setLineDash([]);
-      }
+
     }
   }
 }
